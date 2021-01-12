@@ -77,10 +77,6 @@ A more complex example:
         addresses = Field(List(String))
 
         class Validator(Model.Validator):
-            # provides the functionality for default_setter='random_string'
-            # see cerberus for more information on this
-            # format for this is _{step}_{key}_{name}
-            # where the step is normalize, key is 'default_setter', name is 'random_string'
             def _normalize_default_setter_random_string(self, document):
                 def generate_string(size, chars):
                     return ''.join([choice(chars) for _ in range(size)])
