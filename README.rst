@@ -60,9 +60,12 @@ A more complex example:
 
 .. code-block:: python
 
-    from remodel import Model, Field, String, EmailAddress, List
     import string
     from secrets import choice
+    from remodel import Model, Field, String, EmailAddress, List
+    from remodel.backends.redis import RedisDatabase
+    from redis import Redis
+    import bcrypt
 
     KEY_LENGTH = 10
 
@@ -85,6 +88,22 @@ A more complex example:
                 valid_chars = ''.join([string.ascii_lowercase, string.digits])
                 return generate_string(KEY_LENGTH, valid_chars)
 
+        @classmethod
+        def hash_password(cls, password):
+            hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
+            return hashed.decode('utf-8')
+
+
+    redis = Redis()
+    db = RedisDatabase(redis)
+    user = db.create(User,
+        username='Bob',
+        password=User.hash_password('password'),
+        email='bob@example.com',
+        addresses=['123 Fake Street, Imagination Land, 1234']
+    )
+    # user will be defined now because the model was saved
+    print(user.key)
 
 
 Usage
@@ -145,6 +164,7 @@ Cerberus validator rules can be added by adding a child class called "Validator"
         class Validator(Model.Validator):
             def _normalize_default_setter_generated_string(self, document):
                 return 'abcdefg'
+)
 
 
 Foreign Keys
@@ -171,3 +191,5 @@ Future Work
 
   * Support reverse look-up of foreign keys
   * Removal foreign key when deleting child model, resave before deletion will trigger validation
+
+* Improve README
