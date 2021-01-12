@@ -135,6 +135,8 @@ For example:
 It is possible to pass in None as the database if you don't intened to save the model.
 In this case you can simply use the obj.data property to get the serialised model data.
 
+.. code-block:: python
+
     >>> mymodel = MyModel(None, id='abc', values=['a', 'b', 'c'])
     >>> print(mymodel.data)
     {'id': 'abc', 'values': ['a', 'b', 'c']}
