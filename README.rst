@@ -165,7 +165,7 @@ Cerberus validator rules can be added by adding a child class called "Validator"
         class Validator(Model.Validator):
             def _normalize_default_setter_generated_string(self, document):
                 return 'abcdefg'
-)
+
 
 
 Foreign Keys
@@ -176,7 +176,40 @@ It is recommended if there are relationships that you manage themselves as forei
 Field Attributes are passed through the `Cerberus <https://github.com/pyeve/cerberus>`_ as the field schema.
 The only exception is the primary_key field, which is used
 
+.. code-block:: python
+
+    >>> from remodel import Model, Field, String, Integer, List, ForeignKey
+    >>> from remodel.backends.memory import MemoryDatabase
+    >>>
+    >>> class ModelB(Model):
+    ...     id = Field(String, primary_key=True)
+    ...     value = Field(Integer)
+    ...
+    >>> class ModelA(Model):
+    ...     id = Field(String, primary_key=True)
+    ...     keys = Field(List(ForeignKey(ModelB, cascade=True)))
+    ...
+    >>> db = MemoryDatabase()
+    >>> modelb_1 = db.create(ModelB, id='1', value=1)
+    >>> modelb_2 = db.create(ModelB, id='2', value=2)
+    >>>
+    >>> modela = db.create(ModelA, id='1', keys=[modelb_1, modelb_2])
+    >>> print(modela.keys[0].value)
+    1
+
+
 Defining a ForeignKey field with cascade=True will cause the linked model to be deleted when the current model is deleted.
+
+.. code-block:: python
+
+    >>> db.delete(modela)
+    >>> # Model A will delete the referenced foreign keys
+    >>> db.load(ModelB, '1')
+    Traceback (most recent call last):
+      File "<stdin>", line 1, in <module>
+      File "/home/adam/Workspace/remodel/remodel/backends/memory.py", line 20, in load
+        raise ValueError(f'No instance of {cls.__name__} with primary key "{id}" found')
+    ValueError: No instance of ModelB with primary key "1" found
 
 
 Limitations
