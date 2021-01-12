@@ -14,9 +14,7 @@ Features
   * In-memory - For debugging, testing, and performance
 
 * Basic foreign keys
-
-  * Do not support reverse lookups
-  * Deleting a referenced model does not update the outgoing foreign key.
+* Cerberus schemas remove the need for bytes->string encode/decode
 
 The code is simple to understand.
 The decoupled backend makes it perfect as a base implementation for other ORMs
@@ -219,6 +217,10 @@ Limitations
 ***********
 
 * Containers cannot be nested. Ie. lists and sets cannot contain lists, sets, or models.
+* Foreign keys
+
+  * Do not support reverse lookups
+  * Deleting a referenced model does not update the outgoing foreign key.
 
 
 Future Work
@@ -229,4 +231,6 @@ Future Work
   * Support reverse look-up of foreign keys
   * Removal foreign key when deleting child model, resave before deletion will trigger validation
 
+* Partial text search
+* Index fields
 * Improve README
