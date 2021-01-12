@@ -3,7 +3,6 @@ from inspect import isclass
 from ipaddress import IPv4Address, IPv6Address
 from cerberus import TypeDefinition
 
-
 class Field(object):
     def __init__(self, type, primary_key=False, **kwargs):
         self.type = type() if isclass(type) else type
@@ -34,11 +33,19 @@ def types_mapping():
     return _types_mapping
 
 
+_rules = {}
+def register_rules(data):
+    _rules.update(data)
+def rules():
+    return _rules
+
 class FieldTypeMeta(type):
     def __new__(metacls, name, bases, namespace, **kwargs):
         if 'types_mapping' in namespace:
             register_types_mapping(namespace['types_mapping'])
             #FieldType.types_mapping.update(namespace['types_mapping'])
+        if 'rules' in namespace:
+            register_rules(namespace['rules'])
         return super().__new__(metacls, name, bases, namespace, **kwargs)
 
 
@@ -86,14 +93,20 @@ class DateTime(FieldType):
 class IPAddress(FieldType):
     schema = {'type': 'ipaddress'}
     types_mapping = {'ipaddress': TypeDefinition('ipaddress', (IPv4Address, IPv6Address), ())}
+    # dictionary of: <cerberus type name>: [to bytes, from bytes]
+    rules = {'ipaddress': [lambda x: str(x), lambda x: ip_address(x.decode('utf-8'))]}
 
 class IPV4Address(FieldType):
     schema = {'type': 'ipv4address'}
     types_mapping = {'ipv4address': TypeDefinition('ipv4address', (IPv4Address,), ())}
+    rules = {'ipv4address': [lambda x: str(x), lambda x: IPv4Address(x.decode('utf-8'))]}
+
 
 class IPV6Address(FieldType):
     schema = {'type': 'ipv6address'}
     types_mapping = {'ipv6address': TypeDefinition('ipv6address', (IPv6Address,), ())}
+    rules = {'ipv6address': [lambda x: str(x), lambda x: IPv6Address(x.decode('utf-8'))]}
+
 
 class List(FieldType):
     schema = {'type': 'list'}

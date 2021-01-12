@@ -2,7 +2,8 @@ import unittest
 import string
 from secrets import choice
 from remodel import *
-from models import User, ModelA, ModelB, KEY_LENGTH
+from models import Complex, ModelA, ModelB, KEY_LENGTH
+from ipaddress import IPv4Address
 
 class TestBackend(unittest.TestCase):
     '''Generic backend test that only requires a different self.db value in setUp
@@ -14,61 +15,68 @@ class TestBackend(unittest.TestCase):
         self.db = None
 
     def model_and_fields(self):
-        model = User(self.db,
-            username='abc',
-            password='def', # please don't store plaintext passwords, this is just a test, don't copy this!
+        model = Complex(self.db,
+            id='abc',
+            string='def',
             email='abc@example.com',
-            # don't set default
-            addresses=['a', 'b']
+            # don't set generated
+            list=['a', 'b'],
+            ipv4_address=IPv4Address('127.0.0.1'),
         )
         self.assertEqual(model.primary_key, 'abc')
-        self.assertEqual(model.username, 'abc')
-        self.assertEqual(model.password, 'def')
+        self.assertEqual(model.id, 'abc')
+        self.assertEqual(model.string, 'def')
         self.assertEqual(model.email, 'abc@example.com')
         # key won't be initialised unless saved or created with db.create
-        self.assertIsNone(model.key)
-        self.assertEqual(model.addresses, ['a', 'b'])
+        self.assertIsNone(model.generated)
+        self.assertEqual(model.list, ['a', 'b'])
+        self.assertEqual(model.ipv4_address, IPv4Address('127.0.0.1'))
 
         # save and verify the default values are filled out
         self.db.save(model)
-        self.assertEqual(model.key, 'a' * KEY_LENGTH)
+        self.assertEqual(model.generated, 'a' * KEY_LENGTH)
 
         # cleanup for next test
         self.db.delete(model)
 
         # create the model directly via the db
         # this will automatically fill out the default fields that aren't set
-        model = self.db.create(User,
-            username='abc',
-            password='def', # please don't store plaintext passwords, this is just a test, don't copy this!
+        model = self.db.create(Complex,
+            id='abc',
+            string='def', # please don't store plaintext passwords, this is just a test, don't copy this!
             email='abc@example.com',
-            # don't set default
-            addresses=['a', 'b']
+            # don't set generated
+            list=['a', 'b'],
+            ipv4_address=IPv4Address('127.0.0.1'),
         )
-        self.assertEqual(model.username, 'abc')
-        self.assertEqual(model.password, 'def')
+        self.assertEqual(model.primary_key, 'abc')
+        self.assertEqual(model.id, 'abc')
+        self.assertEqual(model.string, 'def')
         self.assertEqual(model.email, 'abc@example.com')
-        self.assertIsNotNone(model.key)
-        self.assertEqual(model.addresses, ['a', 'b'])
+        self.assertIsNotNone(model.generated)
+        self.assertEqual(model.list, ['a', 'b'])
+        self.assertEqual(model.ipv4_address, IPv4Address('127.0.0.1'))
 
         # check the serialised data
         d = model.data
-        self.assertEqual(d['username'], 'abc')
-        self.assertEqual(d['password'], 'def')
+        self.assertEqual(d['id'], 'abc')
+        self.assertEqual(d['string'], 'def')
         self.assertEqual(d['email'], 'abc@example.com')
-        self.assertIsNotNone(d['key'])
-        self.assertEqual(d['addresses'], ['a', 'b'])
+        self.assertIsNotNone(d['generated'])
+        self.assertEqual(d['list'], ['a', 'b'])
+        self.assertEqual(d['ipv4_address'], IPv4Address('127.0.0.1'))
 
         # reload the model
-        model = self.db.load(User, 'abc')
+        model = self.db.load(Complex, 'abc')
 
         # check the serialised data is the same
         d = model.data
-        self.assertEqual(d['username'], 'abc')
-        self.assertEqual(d['password'], 'def')
+        self.assertEqual(d['id'], 'abc')
+        self.assertEqual(d['string'], 'def')
         self.assertEqual(d['email'], 'abc@example.com')
-        self.assertIsNotNone(d['key'])
-        self.assertEqual(d['addresses'], ['a', 'b'])
+        self.assertIsNotNone(d['generated'])
+        self.assertEqual(d['list'], ['a', 'b'])
+        self.assertEqual(d['ipv4_address'], IPv4Address('127.0.0.1'))
 
     def foreign_keys(self):
         # create child models

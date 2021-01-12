@@ -3,12 +3,13 @@ from remodel import *
 
 # example user model
 KEY_LENGTH = 10
-class User(Model):
-    username = Field(String, primary_key=True)
-    password = Field(String, required=True)
+class Complex(Model):
+    id = Field(String, primary_key=True)
+    string = Field(String, required=True)
     email = Field(EmailAddress, required=True)
-    key = Field(String, required=True, minlength=KEY_LENGTH, maxlength=KEY_LENGTH, default_setter='generated_string')
-    addresses = Field(List(String))
+    generated = Field(String, required=True, minlength=KEY_LENGTH, maxlength=KEY_LENGTH, default_setter='generated_string')
+    list = Field(List(String))
+    ipv4_address = Field(IPV4Address)
 
     class Validator(Model.Validator):
         # provides the functionality for default_setter='generated_string'

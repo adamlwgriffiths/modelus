@@ -1,10 +1,11 @@
 from .database import Database
 from cerberedis import CerbeRedis
+from remodel.fields import rules
 
 class RedisDatabase(Database):
     def __init__(self, redis):
         self.redis = redis
-        self.db = CerbeRedis(self.redis)
+        self.db = CerbeRedis(self.redis, rules())
 
     def create(self, cls, **values):
         # check the primary key doesn't already exist

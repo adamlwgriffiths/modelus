@@ -2,7 +2,8 @@ import unittest
 import string
 from secrets import choice
 from remodel import *
-from models import User, ModelA, ModelB, KEY_LENGTH
+from models import Complex, ModelA, ModelB, KEY_LENGTH
+from ipaddress import IPv4Address
 
 class TestModels(unittest.TestCase):
     def test_no_primary_keys(self):
@@ -24,29 +25,32 @@ class TestModels(unittest.TestCase):
 
     def test_model_and_fields(self):
         db = None
-        model = User(db,
-            username='abc',
-            password='def', # please don't store plaintext passwords, this is just a test, don't copy this!
+        model = Complex(db,
+            id='abc',
+            string='def', # please don't store plaintext passwords, this is just a test, don't copy this!
             email='abc@example.com',
-            # don't set default
-            addresses=['a', 'b']
+            # don't set generated
+            list=['a', 'b'],
+            ipv4_address=IPv4Address('127.0.0.1'),
         )
         self.assertEqual(model.primary_key, 'abc')
-        self.assertEqual(model.username, 'abc')
-        self.assertEqual(model.password, 'def')
+        self.assertEqual(model.id, 'abc')
+        self.assertEqual(model.string, 'def')
         self.assertEqual(model.email, 'abc@example.com')
         # default is only set on create/save
         # as we aren't using a real db here, we don't test that here
-        self.assertIsNone(model.key)
-        self.assertEqual(model.addresses, ['a', 'b'])
+        self.assertIsNone(model.generated)
+        self.assertEqual(model.list, ['a', 'b'])
+        self.assertEqual(model.ipv4_address, IPv4Address('127.0.0.1'))
 
         # check the serialised data
         d = model.data
-        self.assertEqual(d['username'], 'abc')
-        self.assertEqual(d['password'], 'def')
+        self.assertEqual(d['id'], 'abc')
+        self.assertEqual(d['string'], 'def')
         self.assertEqual(d['email'], 'abc@example.com')
-        self.assertEqual(d['key'], 'a' * KEY_LENGTH)
-        self.assertEqual(d['addresses'], ['a', 'b'])
+        self.assertEqual(d['generated'], 'a' * KEY_LENGTH)
+        self.assertEqual(d['list'], ['a', 'b'])
+        self.assertEqual(d['ipv4_address'], IPv4Address('127.0.0.1'))
 
     def test_foreign_keys(self):
         db = None

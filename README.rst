@@ -219,9 +219,13 @@ Adding new Field Types
 New field types should be as simple as sub-classing FieldType.
 
 The type must define a schema, which follows Cerberus.
-If the type is unsupported by Cerberus, you must also add a types_mapping field
+
+If the type is unsupported by Cerberus, you must also add types_mapping and rules fields
 which is automatically added to the Validator instance.
+
 Again, this follows the Cerberus types_mapping format.
+The rules field follows the Cerberedis rules format which is a list of 2 lambdas.
+The first converts the value to bytes, the second from bytes.
 
 The following is a field type that is provided by ReModel, that is not supported by Cerberus.
 
@@ -230,6 +234,7 @@ The following is a field type that is provided by ReModel, that is not supported
     class IPV4Address(FieldType):
         schema = {'type': 'ipv4address'}
         types_mapping = {'ipv4address': TypeDefinition('ipv4address', (IPv4Address,), ())}
+        rules = {'ipv4address': [lambda x: str(x), lambda x: IPv4Address(x.decode('utf-8'))]}
 
 
 
