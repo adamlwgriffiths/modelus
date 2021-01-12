@@ -1,8 +1,5 @@
 
 class Database(object):
-    def incr(self, cls, field):
-        raise NotImplementedError
-
     def create(self, cls, **values):
         raise NotImplementedError
 

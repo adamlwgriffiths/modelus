@@ -172,6 +172,6 @@ class ForeignKey(FieldType):
     # TODO: when built, add a schema value for this field in the target class
 
 
-class AutoInteger(FieldType):
-    schema = {'type': 'integer'}
-    # TODO:
+#class AutoInteger(FieldType):
+#    schema = {'type': 'integer'}
+#    # TODO:

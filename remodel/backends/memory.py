@@ -4,9 +4,6 @@ class MemoryDatabase(Database):
     def __init__(self):
         self.models = {}
 
-    def incr(self, cls, field):
-        pass
-
     def create(self, cls, **values):
         # check the primary key doesn't already exist
         obj = cls(self, **values)
