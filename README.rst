@@ -202,8 +202,11 @@ Defining a ForeignKey field with cascade=True will cause the linked model to be 
 
 .. code-block:: python
 
+    >>> db.load(ModelB, '1')
+    <__main__.ModelB object at 0x7ffbe215ebb0>
+    >>> # delete modela
+    >>> # modela will delete the referenced foreign keys
     >>> db.delete(modela)
-    >>> # Model A will delete the referenced foreign keys
     >>> db.load(ModelB, '1')
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
