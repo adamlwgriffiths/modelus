@@ -213,6 +213,26 @@ Defining a ForeignKey field with cascade=True will cause the linked model to be 
     ValueError: No instance of ModelB with primary key "1" found
 
 
+Adding new Field Types
+**********************
+
+New field types should be as simple as sub-classing FieldType.
+
+The type must define a schema, which follows Cerberus.
+If the type is unsupported by Cerberus, you must also add a types_mapping field
+which is automatically added to the Validator instance.
+Again, this follows the Cerberus types_mapping format.
+
+The following is a field type that is provided by ReModel, that is not supported by Cerberus.
+
+.. code-block:: python
+
+    class IPV4Address(FieldType):
+        schema = {'type': 'ipv4address'}
+        types_mapping = {'ipv4address': TypeDefinition('ipv4address', (IPv4Address,), ())}
+
+
+
 Limitations
 ***********
 
