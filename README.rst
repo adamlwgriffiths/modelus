@@ -1,0 +1,173 @@
+*******
+ReModel
+*******
+
+Declarative data types using `Cerberus <https://github.com/pyeve/cerberus>`_ for schemas.
+
+Features
+========
+
+* Declarative data model
+* De-coupled backends, the following are included:
+
+  * Redis - Using `Cerberedis <https://github.com/adamlwgriffiths/cerberedis>`_.
+  * In-memory - For debugging, testing, and performance
+
+* Basic foreign keys
+
+  * Do not support reverse lookups
+  * Deleting a referenced model does not update the outgoing foreign key.
+
+The code is simple to understand.
+The decoupled backend makes it perfect as a base implementation for other ORMs
+or to simply understand how they are implemented.
+
+This code is not intended to be highly-performant, instead it provides sufficient performance
+for the basic use case of loading simple models with none-to-little relationships.
+
+
+Installation
+============
+
+.. code-block:: bash
+
+    $ pip install remodel
+
+
+Example
+=======
+
+A basic example:
+
+.. code-block:: python
+
+    >>> from remodel import Model, Field, String, List
+    >>> from remodel.backends.memory import MemoryDatabase
+    >>>
+    >>> class MyModel(Model):
+    ...     id = Field(String, primary_key=True)
+    ...     values = Field(List(String), required=True)
+    ...
+    >>> db = MemoryDatabase()
+    >>> mymodel = db.create(MyModel, id='abc', values=['a', 'b', 'c'])
+    >>> # reload
+    >>> mymodel = db.load(MyModel, 'abc')
+    >>> print(mymodel.data)
+    {'id': 'abc', 'values': ['a', 'b', 'c']}
+
+
+A more complex example:
+
+.. code-block:: python
+
+    from remodel import Model, Field, String, EmailAddress, List
+    import string
+    from secrets import choice
+
+    KEY_LENGTH = 10
+
+    class User(Model):
+        username = Field(String, primary_key=True)
+        password = Field(String, required=True)
+        email = Field(EmailAddress, required=True)
+        key = Field(String, required=True, minlength=KEY_LENGTH, maxlength=KEY_LENGTH, default_setter='random_string')
+        addresses = Field(List(String))
+
+        class Validator(Model.Validator):
+            # provides the functionality for default_setter='random_string'
+            # see cerberus for more information on this
+            # format for this is _{step}_{key}_{name}
+            # where the step is normalize, key is 'default_setter', name is 'random_string'
+            def _normalize_default_setter_random_string(self, document):
+                def generate_string(size, chars):
+                    return ''.join([choice(chars) for _ in range(size)])
+
+                valid_chars = ''.join([string.ascii_lowercase, string.digits])
+                return generate_string(KEY_LENGTH, valid_chars)
+
+
+
+Usage
+=====
+
+Models
+******
+
+All data types are specified as a sub-class of Model.
+
+Each field is specified as a class attribute which is a Field object containing a field type.
+
+The backend must be provided to the Model as this used by the ForeignKey functionality.
+
+For example:
+
+.. code-block:: python
+
+    >>> from remodel import Model, Field, String, List
+    >>> from remodel.backends.memory import MemoryDatabase
+    >>>
+    >>> class MyModel(Model):
+    ...     id = Field(String, primary_key=True)
+    ...     values = Field(List(String), required=True)
+    ...
+    >>> db = MemoryDatabase()
+    >>> mymodel = db.create(MyModel, id='abc', values=['a', 'b', 'c'])
+    >>> # reload
+    >>> mymodel = db.load(MyModel, 'abc')
+    >>> print(mymodel.data)
+    {'id': 'abc', 'values': ['a', 'b', 'c']}
+
+It is possible to pass in None as the database if you don't intened to save the model.
+In this case you can simply use the obj.data property to get the serialised model data.
+
+
+
+Field validation and defaults
+*****************************
+
+Parameters to fields are simply passed through to the Cerberus schema.
+`See this documentation <https://docs.python-cerberus.org/en/stable/validation-rules.html>`_ for more Cerberus validation rules.
+
+Cerberus validator rules can be added by adding a child class called "Validator" to your model definition.
+
+.. code-block:: python
+
+    from remodel import Model, Field, String
+
+    class MyModel(Model):
+        # default_setter is a cerberus attribute which will set the value if it is not already
+        # but only on save
+        # the value may be either a function or a string
+        # if the value is a string, the function must be defined in the Validator class as _normalize_default_setter_<name>
+        # https://docs.python-cerberus.org/en/stable/normalization-rules.html
+        value = Field(String, default_setter='generated_string')
+
+        class Validator(Model.Validator):
+            def _normalize_default_setter_generated_string(self, document):
+                return 'abcdefg'
+
+
+Foreign Keys
+************
+
+It is recommended if there are relationships that you manage themselves as foreign key support is rudimentary.
+
+Field Attributes are passed through the `Cerberus <https://github.com/pyeve/cerberus>`_ as the field schema.
+The only exception is the primary_key field, which is used
+
+Defining a ForeignKey field with cascade=True will cause the linked model to be deleted when the current model is deleted.
+
+
+Limitations
+***********
+
+* Containers cannot be nested. Ie. lists and sets cannot contain lists, sets, or models.
+
+
+Future Work
+===========
+
+* Expand Foreign Keys
+
+  * Support reverse look-up of foreign keys
+  * Removal foreign key when deleting child model, resave before deletion will trigger validation

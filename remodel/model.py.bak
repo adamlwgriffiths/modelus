@@ -1,0 +1,200 @@
+from datetime import date, datetime
+from inspect import isclass
+from ipaddress import IPv4Address, IPv6Address
+from random import choice
+import string
+from cerberus import Validator, TypeDefinition
+
+
+class Field(object):
+    def __init__(self, type, primary_key=False, **kwargs):
+        self.type = type() if isclass(type) else type
+        self.primary_key = primary_key
+        self.schema = {**self.type.schema, **kwargs}
+        if self.primary_key:
+            self.schema['required'] = True
+
+    def __set_name__(self, owner, name):
+        self.name = name
+        self.type.__set_name__(owner, name)
+
+    def __set__(self, instance, value):
+        value = self.type.set(instance, value)
+        instance._data[self.name] = value
+
+    def __get__(self, instance, value):
+        value = instance._data.get(self.name)
+        value = self.type.get(instance, value)
+        # update the value incase it changed
+        instance._data[self.name] = value
+        return value
+
+
+class FieldType(object):
+    schema = None
+
+    def __init__(self, **kwargs):
+        self.schema.update(**kwargs)
+
+    def __set_name__(self, owner, name):
+        pass
+
+    def set(self, instance, value):
+        return value
+
+    def get(self, instance, value):
+        return value
+
+
+class Boolean(FieldType):
+    schema = {'type': 'boolean'}
+
+class Number(FieldType):
+    schema = {'type': 'number'}
+
+class Integer(FieldType):
+    schema = {'type': 'integer'}
+
+class Float(FieldType):
+    schema = {'type': 'float'}
+
+class String(FieldType):
+    schema = {'type': 'string'}
+
+class EmailAddress(FieldType):
+    EMAIL_REGEX = '^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
+    schema = {'type': 'string', 'regex': EMAIL_REGEX}
+
+class Date(FieldType):
+    schema = {'type': 'date'}
+
+class DateTime(FieldType):
+    schema = {'type': 'datetime'}
+
+class IPAddress(FieldType):
+    schema = {'type': 'ipaddress'}
+
+class IPV4Address(FieldType):
+    schema = {'type': 'ipv4address'}
+
+class IPV6Address(FieldType):
+    schema = {'type': 'ipv6address'}
+
+class List(FieldType):
+    schema = {'type': 'list'}
+
+    def __init__(self, type, **kwargs):
+        self.type = type() if isclass(type) else type
+        if self.type.schema['type'] in ['list', 'set']:
+            raise TypeError('Container fields are not nestable')
+
+        super().__init__(schema=self.type.schema, **kwargs)
+
+    def __set_name__(self, owner, name):
+        self.type.__set_name__(owner, name)
+
+    def set(self, instance, value):
+        return [self.type.set(instance, item) for item in value]
+
+    def get(self, instance, value):
+        return [self.type.get(instance, item) for item in value]
+
+class Set(FieldType):
+    schema = {'type': 'set'}
+    # TODO:
+
+class ForeignKey(FieldType):
+    schema = {'type': 'string', 'coerce': 'primary_key'}
+
+    def __init__(self, type, cascade=True, **kwargs):
+        super().__init__(**kwargs)
+        self.type = type
+        self.cascade = cascade
+
+    def __set_name__(self, owner, name):
+        # register the foreign key cascade with the owner
+        if self.cascade:
+            cascade = (name, self.type)
+            owner._foreign_key_cascades.add(cascade)
+
+    def get(self, instance, value):
+        if not isinstance(value, self.type):
+            value = instance.db.load(self.type, value)
+        return value
+
+class AutoInteger(FieldType):
+    schema = {'type': 'integer'}
+    # TODO:
+
+
+
+class ModelMeta(type):
+    def __new__(metacls, name, bases, namespace, **kwargs):
+        def discover_fields():
+            return {k:v for k,v in namespace.items() if isinstance(v, Field)}
+        def determine_primary_key(fields):
+            # ensure we have at least one primary key
+            # don't do this check for the base Model class
+            if name != 'Model':
+                for field_name, field in fields.items():
+                    if field.primary_key:
+                        return field_name
+                else:
+                    raise TypeError('No field is specified as primary_key')
+        def create_schema():
+            return {name: field.schema for name, field in fields.items()}
+
+        fields = discover_fields()
+        namespace['_fields'] = fields
+        namespace['_primary_key'] = determine_primary_key(fields)
+        namespace['schema'] = create_schema()
+        namespace['_foreign_key_cascades'] = set()
+        return super().__new__(metacls, name, bases, namespace, **kwargs)
+
+
+class Model(object, metaclass=ModelMeta):
+    class Validator(Validator):
+        # TODO: moves these somewhere else or into some sort of registry
+        types_mapping = {**Validator.types_mapping, **{
+            'ipaddress': TypeDefinition('ipaddress', (IPv4Address, IPv6Address), ()),
+            'ipv4address': TypeDefinition('ipv4address', (IPv4Address,), ()),
+            'ipv6address': TypeDefinition('ipv6address', (IPv6Address,), ()),
+        }}
+
+        def _normalize_default_setter_utcnow(self, document):
+            return datetime.utcnow()
+        def _normalize_coerce_primary_key(self, value):
+            if isinstance(value, Model):
+                return value.primary_key
+            return value
+
+    def __init__(self, db, **values):
+        self.db = db
+        self._data = {}
+        for k,v in values.items():
+            setattr(self, k, v)
+
+    @property
+    def primary_key(self):
+        return self._data.get(self._primary_key)
+
+    @property
+    def validator(self):
+        validator_type = self.Validator if hasattr(self, 'Validator') else Validator
+        return validator_type(self.schema)
+
+    def validate(self):
+        # apply transformation rules
+        # validate the resulting document
+        validator = self.validator
+        document = validator.normalized(self._data)
+        if not validator(document):
+            raise ValueError(str(validator.errors))
+        return validator.document
+
+    @property
+    def data(self):
+        data = self.validate()
+        # update any values that were altered as part of normalisation
+        self._data.update(data)
+        return data
