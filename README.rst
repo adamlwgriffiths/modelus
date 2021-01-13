@@ -1,6 +1,6 @@
-*******
-ReModel
-*******
+********
+Modelus
+********
 
 Declarative data types using `Cerberus <https://github.com/pyeve/cerberus>`_ for schemas.
 
@@ -29,7 +29,7 @@ Installation
 
 .. code-block:: bash
 
-    $ pip install remodel
+    $ pip install modelus
 
 
 Example
@@ -39,8 +39,8 @@ A basic example:
 
 .. code-block:: python
 
-    >>> from remodel import Model, Field, String, List
-    >>> from remodel.backends.memory import MemoryDatabase
+    >>> from modelus import Model, Field, String, List
+    >>> from modelus.backends.memory import MemoryDatabase
     >>>
     >>> class MyModel(Model):
     ...     id = Field(String, primary_key=True)
@@ -60,8 +60,8 @@ A more complex example:
 
     import string
     from secrets import choice
-    from remodel import Model, Field, String, EmailAddress, List
-    from remodel.backends.redis import RedisDatabase
+    from modelus import Model, Field, String, EmailAddress, List
+    from modelus.backends.redis import RedisDatabase
     from redis import Redis
     import bcrypt
 
@@ -116,8 +116,8 @@ For example:
 
 .. code-block:: python
 
-    >>> from remodel import Model, Field, String, List
-    >>> from remodel.backends.memory import MemoryDatabase
+    >>> from modelus import Model, Field, String, List
+    >>> from modelus.backends.memory import MemoryDatabase
     >>>
     >>> class MyModel(Model):
     ...     id = Field(String, primary_key=True)
@@ -150,7 +150,7 @@ Cerberus validator rules can be added by adding a child class called "Validator"
 
 .. code-block:: python
 
-    from remodel import Model, Field, String
+    from modelus import Model, Field, String
 
     class MyModel(Model):
         # default_setter is a cerberus attribute which will set the value if it is not already
@@ -176,8 +176,8 @@ The only exception is the primary_key field, which is used
 
 .. code-block:: python
 
-    >>> from remodel import Model, Field, String, Integer, List, ForeignKey
-    >>> from remodel.backends.memory import MemoryDatabase
+    >>> from modelus import Model, Field, String, Integer, List, ForeignKey
+    >>> from modelus.backends.memory import MemoryDatabase
     >>>
     >>> class ModelB(Model):
     ...     id = Field(String, primary_key=True)
@@ -208,7 +208,7 @@ Defining a ForeignKey field with cascade=True will cause the linked model to be 
     >>> db.load(ModelB, '1')
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
-      File "/home/adam/Workspace/remodel/remodel/backends/memory.py", line 20, in load
+      File "/home/adam/Workspace/modelus/modelus/backends/memory.py", line 20, in load
         raise ValueError(f'No instance of {cls.__name__} with primary key "{id}" found')
     ValueError: No instance of ModelB with primary key "1" found
 

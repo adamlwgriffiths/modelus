@@ -1,7 +1,7 @@
 import unittest
 import string
 from secrets import choice
-from remodel import *
+from modelus import *
 from models import Complex, ModelA, ModelB, KEY_LENGTH
 from ipaddress import IPv4Address
 

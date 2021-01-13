@@ -1,8 +1,8 @@
 import unittest
 import string
 from secrets import choice
-from remodel import *
-from remodel.backends.memory import MemoryDatabase
+from modelus import *
+from modelus.backends.memory import MemoryDatabase
 from backend import TestBackend
 
 class TestMemoryDatabase(TestBackend):

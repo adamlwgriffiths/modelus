@@ -1,8 +1,8 @@
 import unittest
 import string
 from secrets import choice
-from remodel import *
-from remodel.backends.redis import RedisDatabase
+from modelus import *
+from modelus.backends.redis import RedisDatabase
 from redis_mock import Redis
 from backend import TestBackend
 

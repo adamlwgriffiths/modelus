@@ -1,6 +1,6 @@
 from datetime import datetime
 from cerberus import Validator, TypeDefinition
-from remodel.fields import Field, FieldType, types_mapping
+from modelus.fields import Field, FieldType, types_mapping
 
 
 _models = {}

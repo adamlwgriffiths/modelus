@@ -1,5 +1,5 @@
 import string
-from remodel import *
+from modelus import *
 
 # example user model
 KEY_LENGTH = 10

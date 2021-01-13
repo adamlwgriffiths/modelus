@@ -1,6 +1,6 @@
 from .database import Database
 from cerberedis import CerbeRedis
-from remodel.fields import rules
+from modelus.fields import rules
 
 class RedisDatabase(Database):
     def __init__(self, redis):

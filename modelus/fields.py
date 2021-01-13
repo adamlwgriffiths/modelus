@@ -150,7 +150,7 @@ class ForeignKey(FieldType):
     def __init__(self, type, cascade=True, **kwargs):
         '''cascade indicates that when deleting this model, the linked model should be deleted too.
         '''
-        from remodel.model import model
+        from modelus.model import model
         super().__init__(**kwargs)
         self.type = type
         self.cascade = cascade
