@@ -9,6 +9,9 @@ class TestMemoryDatabase(TestBackend):
     def setUp(self):
         self.db = MemoryDatabase()
 
+    def test_not_found(self):
+        self.not_found()
+
     def test_model_and_fields(self):
         self.model_and_fields()
 

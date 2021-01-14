@@ -14,6 +14,10 @@ class TestBackend(unittest.TestCase):
     def tearDown(self):
         self.db = None
 
+    def not_found(self):
+        with self.assertRaises(ValueError):
+            self.db.load(Complex, 'abcdef')
+
     def model_and_fields(self):
         model = Complex(self.db,
             id='abc',

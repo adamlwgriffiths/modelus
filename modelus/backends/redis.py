@@ -15,6 +15,8 @@ class RedisDatabase(Database):
 
     def load(self, cls, id):
         data = self.db.load(cls.__name__, cls.schema, id)
+        if not data:
+            raise ValueError(f'No instance of {cls.__name__} with primary key "{id}" found')
         return cls(self, **data)
 
     def save(self, obj):

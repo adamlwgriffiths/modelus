@@ -6,10 +6,16 @@ from modelus.backends.redis import RedisDatabase
 from redis_mock import Redis
 from backend import TestBackend
 
-class TestMemoryDatabase(TestBackend):
+class TestRedisDatabase(TestBackend):
     def setUp(self):
         self.redis = Redis()
         self.db = RedisDatabase(self.redis)
+
+    def tearDown(self):
+        self.redis.flushall()
+
+    def test_not_found(self):
+        self.not_found()
 
     def test_model_and_fields(self):
         self.model_and_fields()
